@@ -11,10 +11,21 @@ packnames = set()
 #   Using this, you can find out which packs you need to properly generate an Etterna.xml from your stats.xml.
 ##
 
-for song in e[1]:
-    try:
-        packnames.add(song.attrib["Dir"].split("/")[1])
-    except:
-        pass
+def getSection(xml, sectionName):
+    for section in xml:
+        if section.tag == sectionName:
+            return section
+    return None
 
-print("\n".join(sorted(packnames)))
+section = getSection(e, "SongScores")
+if section is not None:
+
+    for song in section:
+        try:
+            packnames.add(song.attrib["Dir"].split("/")[1])
+        except:
+            pass
+
+    print("\n".join(sorted(packnames)))
+else:
+    print("Failed due to missing section")
