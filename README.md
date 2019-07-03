@@ -1,6 +1,8 @@
 # EtternaScripts
 Within the many folders here, you will find a bunch of small scripts I've written as time passed which has facilitated my development or fascination with Etterna and Stepmania in some way.
 
+All scripts are written based on Python 3.7 with the intent of requiring as few extra libraries as possible other than numpy or matplotlib.
+
 ## AudioAggregator
 I wrote this when I wanted a way to be able to copy every audio file in my Songs directory to a single location so that I could listen to them without needing to use the Stepmania Jukebox.
 This script should work infinitely recursively, so it won't just work on a Stepmania Songs folder.
