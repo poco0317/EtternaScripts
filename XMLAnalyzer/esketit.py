@@ -280,7 +280,7 @@ def run_pb_plot(xml):
     name = get_displayname(xml)
     plt.title(f"All PBs by {skillset} from {name}{' (Filtered)' if advanced_filter else ''}")
     fg.savefig(f"pbgraph_{name}.png", dpi=500)
-    print("Done.")
+    print("Done\n")
 
 
 def main():
