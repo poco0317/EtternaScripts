@@ -295,7 +295,7 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
                                         AAkeys.add(pbkey)
                 except:
                     failed += 1
-                    traceback.print_exc()
+                    #traceback.print_exc()
     overallWithDates = [data for (pb,data) in pbmap.items()]
     yeetus = sorted(overallWithDates, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S"))
 

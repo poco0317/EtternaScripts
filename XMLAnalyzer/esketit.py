@@ -269,7 +269,6 @@ def run_pb_plot(xml):
         ax.plot_date(dates[v], values[v], color=colors[v], markersize=1)
         print(v, len(values[v]))
 
-    print(scores)
     plt.yticks(np.arange(5, min(max(scores[0][1]), 38), 1.0))
     if not no_limits:
         plt.ylim([8,min(max(scores[0][1]), 38)])
