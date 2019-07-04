@@ -42,6 +42,12 @@ I wrote this because everyone deserves an analysis of their sessions. This scrip
 
 Execution: Run the script and read the prompt.
 
+Example Images:
+
+<img src="https://user-images.githubusercontent.com/2531164/60688638-10699900-9e7c-11e9-8687-00015fc0a9bd.png" width="720">
+<img src="https://user-images.githubusercontent.com/2531164/60688647-1eb7b500-9e7c-11e9-87a8-79a364448300.png" width="720">
+<img src="https://user-images.githubusercontent.com/2531164/60688651-211a0f00-9e7c-11e9-856d-63bed945282b.png" width="720">
+
 
 ## XMLMerger
 I wrote this script because sometimes people have multiple Etterna.xml files or profiles and they might need to merge them for some reason. Of course the game can actually already do this, but sometimes you don't have access to the game or the process may take far longer than you want. So what this does is not so carefully mash two given Etterna.xml files together. It can even take the same one twice. I wouldn't recommend it. The comments in the code very slightly explain why some decisions regarding merging were done. In short, I was lazy. But the resulting profile will still run. It may look very malformed in an XML viewer or text editor, but the game handles it well.
