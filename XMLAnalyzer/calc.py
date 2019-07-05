@@ -1,6 +1,9 @@
+import os
 import math
+import time
 import datetime
 import traceback
+from multiprocessing import Pool
 
 
 
@@ -19,7 +22,7 @@ def aggregateSSRs(skillset, rating, res, iter, topssrs):
         return rating
     return aggregateSSRs(skillset, rating - res, res / 2, iter + 1, topssrs)
 
-def aggregateSSRsByDate(dates, ssrs, skillset, rating, res, iter):
+def aggregateSSRsByDate(dates, ssrs, skillset, rating, res, iter, dayIndex):
     sum = 0
     while True:
         sum = 0
@@ -30,8 +33,8 @@ def aggregateSSRsByDate(dates, ssrs, skillset, rating, res, iter):
         if 2 ** (rating * 0.1) >= sum:
             break
     if iter == 11:
-        return rating
-    return aggregateSSRsByDate(dates, ssrs, skillset, rating - res, res / 2, iter + 1)
+        return rating, skillset, dayIndex
+    return aggregateSSRsByDate(dates, ssrs, skillset, rating - res, res / 2, iter + 1, dayIndex)
 
 def calcRating(ssrs):
     skillz = {}
@@ -77,21 +80,37 @@ def calcRatingByDate(ssrs, no_limits = False):
             break
     
     SSRsByDates = {}
+
+    pool = Pool()
+    j1 = time.time()
+    skillsets = skillset_consts[1:]
+    each_day = {}
+
+    def the_callback(x):
+        ss = x[1]
+        result = x[0] * 1.04
+        index = x[2]
+        if index in each_day:
+            each_day[index][ss] = result
+            if len(each_day[index]) == 7:
+                each_day[index]["Overall"] = sum(sorted([x for x in each_day[index].values()])[1:]) / 6
+                print(f"\tFinished day {index+1}")
+        else:
+            each_day[index] = {ss: result}
+
     for i in range(len(listOfDates)):
-        print("On Date", i+1, "out of", len(listOfDates))
-        skillz = []
-        output = {}
-        skillsets = skillset_consts[1:]
-        for ss in skillsets:
-            output[ss] = aggregateSSRsByDate(listOfDates[:i], listOfRatingsByDate, ss, 0, 10.24, 1) * 1.04
-            skillz.append(output[ss])
-        skills = sorted(skillz)[1:]
-        
-        dayResults = {}
-        dayResults["Overall"] = sum(skills) / 6
-        for j in range(len(skillsets)):
-            dayResults[skillsets[j]] = skillz[j]
+        # decided to define it weird bro dont ask me
+        {ss: pool.apply_async(aggregateSSRsByDate, args=(listOfDates[:i], listOfRatingsByDate, ss, 0, 10.24, 1, i), callback=the_callback) for ss in skillsets}
+    
+    print(f"Queued the process pool. There are {len(listOfDates)} days to calculate. Up to {os.cpu_count()} processes may spawn.")
+    pool.close() # stop the pool
+    pool.join() # block until the pool finishes
+
+    for i in range(len(listOfDates)):
+        dayResults = each_day[i]
         SSRsByDates[listOfDates[i]] = dayResults
+    j2 = time.time()
+    print(f"Full run took {j2-j1} seconds")
     return SSRsByDates
 
 def setAllTopSSRs(charts, ssrnorm, requiredAcc = 0, no_limits = False):
