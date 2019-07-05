@@ -5,11 +5,12 @@ import datetime
 import traceback
 from multiprocessing import Pool
 
-
-
 skillset_consts = ["Overall", "Stream", "Jumpstream", "Handstream", "JackSpeed", "Chordjack", "Technical", "Stamina"]
 
 def aggregateSSRs(skillset, rating, res, iter, topssrs):
+    '''
+    Calculate Skillset Rating for a selected Skillset given a list of Top SSR Values
+    '''
     sum = 0
     while True:
         sum = 0
@@ -23,6 +24,11 @@ def aggregateSSRs(skillset, rating, res, iter, topssrs):
     return aggregateSSRs(skillset, rating - res, res / 2, iter + 1, topssrs)
 
 def aggregateSSRsByDate(dates, ssrs, skillset, rating, res, iter, dayIndex):
+    '''
+    Calculate Skillset Rating for a selected Skillset given a list of Top SSR Values
+    However, this will only calculate for the dates in the given list.
+    Those dates must correspond to existent SSR Values in the given SSR list
+    '''
     sum = 0
     while True:
         sum = 0
@@ -37,6 +43,9 @@ def aggregateSSRsByDate(dates, ssrs, skillset, rating, res, iter, dayIndex):
     return aggregateSSRsByDate(dates, ssrs, skillset, rating - res, res / 2, iter + 1, dayIndex)
 
 def calcRating(ssrs):
+    '''
+    Shortcut to grab a dict of all Skillset Ratings given a full list of SSRs
+    '''
     skillz = {}
     output = {}
     for ss in skillset_consts[1:]:
@@ -55,12 +64,13 @@ def calcRating(ssrs):
 
 def calcRatingByDate(ssrs, no_limits = False):
     '''
-    TopSSRs should be sorted by now so this will go smoothly.
+    Given a list of SSRs to work with, calculate the Skillset Ratings for every day of those SSRs
+    Return a dict mapping those dates to the Skillsets
     '''
-    listOfRatingsByDate = {}
-    for ss in skillset_consts:
-        listOfRatingsByDate[ss] = {}
+    listOfRatingsByDate = {ss: {} for ss in skillset_consts}
+    SSRsByDates = {}
 
+    # gather a list of ratings by date and attach a readable datetime to them
     for skillset, grades in ssrs.items():
         for grade in grades:
             date = grade[1].replace(hour = 0, minute = 0, second = 0)
@@ -74,19 +84,22 @@ def calcRatingByDate(ssrs, no_limits = False):
     if no_limits:
         earliestDate = datetime.datetime(year=2001, month=1, day=1)
 
+    # cut off any scores that happen to be in the list if they are too early
     for i in range(len(listOfDates)):
         if listOfDates[i] > earliestDate:
             listOfDates = listOfDates[i:]
             break
     
-    SSRsByDates = {}
-
     pool = Pool()
     j1 = time.time()
     skillsets = skillset_consts[1:]
+    total = len(listOfDates)
     each_day = {}
 
     def the_callback(x):
+        '''
+        Callback for process pool which fills out the info per day
+        '''
         ss = x[1]
         result = x[0] * 1.04
         index = x[2]
@@ -94,28 +107,28 @@ def calcRatingByDate(ssrs, no_limits = False):
             each_day[index][ss] = result
             if len(each_day[index]) == 7:
                 each_day[index]["Overall"] = sum(sorted([x for x in each_day[index].values()])[1:]) / 6
-                print(f"\tFinished day {index+1}")
+                SSRsByDates[listOfDates[index]] = each_day[index]
+                print(f"\tFinished day {index+1} of {total}")
         else:
             each_day[index] = {ss: result}
 
-    for i in range(len(listOfDates)):
-        # decided to define it weird bro dont ask me
-        {ss: pool.apply_async(aggregateSSRsByDate, args=(listOfDates[:i], listOfRatingsByDate, ss, 0, 10.24, 1, i), callback=the_callback) for ss in skillsets}
+    for i in range(total):
+        for ss in skillsets:
+            pool.apply_async(aggregateSSRsByDate, args=(listOfDates[:i], listOfRatingsByDate, ss, 0, 10.24, 1, i), callback=the_callback)
     
-    print(f"Queued the process pool. There are {len(listOfDates)} days to calculate. Up to {os.cpu_count()} processes may spawn.")
+    print(f"Queued the process pool. There are {total} days to calculate. Up to {os.cpu_count()} processes may spawn.")
     pool.close() # stop the pool
     pool.join() # block until the pool finishes
 
-    for i in range(len(listOfDates)):
-        dayResults = each_day[i]
-        SSRsByDates[listOfDates[i]] = dayResults
     j2 = time.time()
     print(f"Full run took {j2-j1} seconds")
     return SSRsByDates
 
 def setAllTopSSRs(charts, ssrnorm, requiredAcc = 0, no_limits = False):
     '''
-    Note: This is for PBs only, and all invalid scores are ignored. This means no CC On. No Client Invalidated.
+    Get all valid PB SSRs for the profile. Must be CC Off.
+    Returns a dict mapping skillsets to big lists of SSR values
+    Each list of SSR values is sorted
     '''
     failed = 0
     topssrs = {}
@@ -136,7 +149,7 @@ def setAllTopSSRs(charts, ssrnorm, requiredAcc = 0, no_limits = False):
                             topssrs[attribute.tag] = [(float(" ".join(attribute.itertext())), datime)]
                 except:
                     failed += 1
-                    #traceback.print_exc() # usually complaints about the ssrs missing
+                    #traceback.print_exc() # usually complains about the ssr section missing
     for k,v in topssrs.items():
         topssrs[k] = sorted(v, key = lambda x: x[1])
     return topssrs
@@ -187,8 +200,7 @@ class InfoHolder:
 
 def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requiredAcc = 0, no_limits = False):
     '''
-    Given the skillset, get the scores
-    Can filter.
+    Get the full list of scores according to the given Skillset and set of charts
     '''
     failed = 0
     skipped = 0
