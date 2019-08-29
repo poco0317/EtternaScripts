@@ -181,7 +181,7 @@ def fitsAcc(score, requiredAcc, ssrnorm):
         return False
 
 class InfoHolder:
-    def __init__(self, date, skillsetdict, percent, name=""):
+    def __init__(self, date, skillsetdict, percent, name="", grade=""):
         self.date = date
         self.skillsets = skillsetdict
         self.overall = skillsetdict["Overall"]
@@ -194,10 +194,27 @@ class InfoHolder:
         self.technical = skillsetdict["Technical"]
         self.percent = percent
         self.name = name
+        self.grade = grade
     def __repr__(self):
         return str(self.date) + f" {self.percent * 100:.4f}% worth " + str(self.overall)
     def __str__(self):
         return str(self.date) + f" {self.percent * 100:.4f}% worth " + str(self.overall)
+
+def map_grade_tier_to_int(grade):
+    '''
+    Given a grade string, return an int for comparison. 0 would be AAAA. 7 is Failed.
+    '''
+    gradez = [
+        "Tier01",
+        "Tier02",
+        "Tier03",
+        "Tier04",
+        "Tier05",
+        "Tier06",
+        "Tier07",
+        "Failed"
+    ]
+    return gradez.index(grade)
 
 def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requiredAcc = 0, no_limits = False):
     '''
@@ -218,6 +235,11 @@ def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requi
                         tag = attribute.tag
                         value = float(" ".join(attribute.itertext()))
                         inputinfo[tag] = value
+                    grade = ""
+                    try:
+                        grade = ["".join(x.itertext()) for x in score.findall("Grade")][0]
+                    except:
+                        pass
 
                     biggestSS = skillset
                     if advanced_filter:
@@ -231,7 +253,7 @@ def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requi
                             percent = float([" ".join(x.itertext()) for x in score.findall("WifeScore")][0])
                         else:
                             percent = float([" ".join(x.itertext()) for x in score.findall("SSRNormPercent")][0])
-                        SkillsetsWithDates.append(InfoHolder( datime, inputinfo, percent, chart.get("Song")))
+                        SkillsetsWithDates.append(InfoHolder( datime, inputinfo, percent, chart.get("Song"), grade))
                     else:
                         skipped += 1
                 except:
