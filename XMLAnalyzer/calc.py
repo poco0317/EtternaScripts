@@ -181,7 +181,7 @@ def fitsAcc(score, requiredAcc, ssrnorm):
         return False
 
 class InfoHolder:
-    def __init__(self, date, skillsetdict, percent):
+    def __init__(self, date, skillsetdict, percent, name=""):
         self.date = date
         self.skillsets = skillsetdict
         self.overall = skillsetdict["Overall"]
@@ -193,6 +193,7 @@ class InfoHolder:
         self.chordjack = skillsetdict["Chordjack"]
         self.technical = skillsetdict["Technical"]
         self.percent = percent
+        self.name = name
     def __repr__(self):
         return str(self.date) + f" {self.percent * 100:.4f}% worth " + str(self.overall)
     def __str__(self):
@@ -230,7 +231,7 @@ def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requi
                             percent = float([" ".join(x.itertext()) for x in score.findall("WifeScore")][0])
                         else:
                             percent = float([" ".join(x.itertext()) for x in score.findall("SSRNormPercent")][0])
-                        SkillsetsWithDates.append(InfoHolder( datime, inputinfo, percent))
+                        SkillsetsWithDates.append(InfoHolder( datime, inputinfo, percent, chart.get("Song")))
                     else:
                         skipped += 1
                 except:

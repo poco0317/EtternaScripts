@@ -156,6 +156,36 @@ def run_skillset_graph(xml):
 
     return 0
 
+def run_most_played(xml):
+    charts = get_section(xml, "PlayerScores")
+    if charts is None:
+        print("XML did not have scores.")
+        return 1
+    
+    scores = get_scores(charts, "Overall")
+
+    print()
+
+    print("How long do you want the list to be? Top 50 is the default.")
+    amount = int(get_number(default = 50))
+
+    combined_scores = []
+    for k in scores:
+        combined_scores.extend(list(scores[k]))
+
+    list_of_names = {}
+    for score in combined_scores:
+        if score.name not in list_of_names:
+            list_of_names[score.name] = 1
+        else:
+            list_of_names[score.name] += 1
+
+    for x in sorted(list_of_names, key=list_of_names.get, reverse=True)[:amount]:
+        if x != "":
+            print(x, list_of_names[x])
+
+    return 0
+
 def run_all_plot(xml):
     charts = get_section(xml, "PlayerScores")
     if charts is None:
@@ -297,6 +327,7 @@ def main():
         print("2: Generate Skillset Over Time Graph")
         print("3: Generate PB Dot Plot")
         print("4: Generate All Score Dot Plot")
+        print("5: Display a list of the most played files")
 
         decision = input()
         try:
@@ -308,6 +339,8 @@ def main():
                 run_pb_plot(xml)
             elif decision == "4":
                 run_all_plot(xml)
+            elif decision == "5":
+                run_most_played(xml)
             elif decision == "e":
                 return 69
         except:
