@@ -18,6 +18,8 @@ If for any reason your terminal complains that `pip` does not exist as a command
 
 Once you have the modules, run `python esketit.py` or `python3 esketit.py`. The instructions in the terminal should be clear enough from this point. Simply indicate a specific filename for the Etterna.xml if it is in the same folder as the script, or give a complete path if it is located remotely. If it fails for any reason at this point or you enter no name, it attempts to find Etterna.xml in the same folder. If it still fails, you're out of luck and probably ran it incorrectly. Spaces in the path name should not make a difference.
 
+If you really are lazy and don't want to open command prompt every time you want to run this, use run.bat. It might work. Didn't really test it much.
+
 Each process listed within should take a reasonable amount of time to run. They are near instant except for the Skillset Over Time Graph. This requires heavy calculation on all of your scores once for every single day's worth of scores. When run, it attempts to use 1 process for each CPU core to speed up the calculations. For an expected amount of time, I can say that this took about 45 seconds when parsing 500 days worth of 18000 scores on a R7 1700. Without the multiple processes, it can take much longer up to several minutes in the absolute extreme cases.
 
 
