@@ -65,8 +65,8 @@ except:
 # Each modern Etterna XML usually has up to 6 sections (in a single giant <Stats> section)
 # These sections are always in this order:
 # GeneralData, Favorites, Permamirror, Playlists, ScoreGoals, PlayerScores
-# We want to merge the XMLs to produce a super XML of both while hopefully staying consistent
-# in terms of keeping certain TopScore values with scores. That'll be the hardest part.
+# We want to merge the XMLs to produce a super XML of both. The client can sanitize the scores
+# as long as they are placed in the correct location, as TopScore and the SSRs are recalculated on startup.
 
 def findSection(xml, sectionName):
     ''' Find a section of the XML by name. Return None if no section exists.'''
@@ -77,6 +77,10 @@ def findSection(xml, sectionName):
 
 # GeneralData. This contains literally general data and info about the profile.
 # I'm expecting this to be already filled out so I won't mess with it.
+e_generaldata = findSection(e, "GeneralData")
+if e_generaldata is None:
+    print("The first XML is missing general data so I quit.")
+    exit()
 
 # Favorites. This contains a list of chartkeys as tag endings, simply enough.
 # We can merge this.
@@ -211,47 +215,79 @@ if e_goal_section is not None or e2_goal_section is not None:
 # This is the largest and most important piece of information.
 # Merging this is very tough.
 # Consider: Each score is organized by Chart Key. Beyond that, it is organized by lists of scores at a rate.
-# Each score has a TopScore status. This status is likely to change (and should be recalculated by the game anyways)
-# Due to astronomical amounts of laziness, I have chosen to just cram the elements all into one pile.
-# (and also filter out duplicates in the process)
-all_scores = {}
+
+all_scores = {} # by chartkey
 e_score_section = findSection(e, "PlayerScores")
 e2_score_section = findSection(e2, "PlayerScores")
 
+all_score_keys = set() # by scorekey
 if e_score_section is not None:
     print("Main xml score size", len(e_score_section))
     for chart in list(e_score_section):
         key = chart.attrib["Key"]
         if key not in all_scores:
-            all_scores[key] = chart
+            all_scores[key] = {}
+            for scoresat in list(chart):
+                all_scores[key][scoresat.attrib["Rate"]] = scoresat
+                for score in list(scoresat):
+                    all_score_keys.add(score.attrib["Key"])
         else:
             for scoresat in list(chart):
-                all_scores[key].append(scoresat)
+                rate = scoresat.attrib["Rate"]
+                if rate in all_scores[key]:
+                    for score in list(scoresat):
+                        if score.attrib["Key"] in all_score_keys:
+                            continue
+                        all_score_keys.add(score.attrib["Key"])
+                        ggg = xml.etree.ElementTree.SubElement(all_scores[key][rate], "Score", attrib={"Key": score.attrib["Key"]})
+                        ggg.extend(score)
+                else:
+                    all_scores[key][scoresat.attrib["Rate"]] = scoresat
+                    for score in list(scoresat):
+                        all_score_keys.add(score.attrib["Key"])
+
 
 if e2_score_section is not None:
     print("Second xml score size", len(e2_score_section))
     for chart in list(e2_score_section):
         key = chart.attrib["Key"]
         if key not in all_scores:
-            all_scores[key] = chart
+            all_scores[key] = {}
+            for scoresat in list(chart):
+                all_scores[key][scoresat.attrib["Rate"]] = scoresat
+                for score in list(scoresat):
+                    all_score_keys.add(score.attrib["Key"])
         else:
             for scoresat in list(chart):
-                all_scores[key].append(scoresat)
+                rate = scoresat.attrib["Rate"]
+                if rate in all_scores[key]:
+                    for score in list(scoresat):
+                        if score.attrib["Key"] in all_score_keys:
+                            continue
+                        all_score_keys.add(score.attrib["Key"])
+                        ggg = xml.etree.ElementTree.SubElement(all_scores[key][rate], "Score", attrib={"Key": score.attrib["Key"]})
+                        ggg.extend(score)
+                else:
+                    all_scores[key][scoresat.attrib["Rate"]] = scoresat
+                    for score in list(scoresat):
+                        all_score_keys.add(score.attrib["Key"])
 e3_score_section = None
 if len(all_scores) > 0:
     e3_score_section = xml.etree.ElementTree.Element("PlayerScores")
-    for chart_element in all_scores.values():
-        e3_score_section.append(chart_element)
-    print("Final xml score size", len(e3_score_section))
-        
+    for chartkey, scoresat in all_scores.items():
+        cnode = xml.etree.ElementTree.SubElement(e3_score_section, "Chart")
+        cnode.attrib["Key"] = chartkey
+        for rate, scores in scoresat.items():
+            satnode = xml.etree.ElementTree.SubElement(cnode, "ScoresAt")
+            satnode.attrib["Rate"] = rate
+            for s in list(scores):
+                snode = xml.etree.ElementTree.SubElement(satnode, "Score", attrib={"Key": s.attrib["Key"]})
+                snode.extend(s)
+    print("Final xml score size", len(e3_score_section))    
 
 
 # Outputting the xml.
 root = xml.etree.ElementTree.Element("Stats")
-e_generaldata = findSection(e, "GeneralData")
-if e_generaldata is None:
-    print("The first XML is missing general data so I quit.")
-    exit()
 
 root.append(e_generaldata)
 if favorites_Element is not None:
