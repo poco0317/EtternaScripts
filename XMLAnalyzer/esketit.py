@@ -216,6 +216,7 @@ def run_all_plot(xml):
     fg, ax = plt.subplots()
 
     colors = {
+        "AAAAA" : 'm',
         "AAAA" : 'c',
         "AAA" : 'y',
         "AA" : 'b',
@@ -227,7 +228,7 @@ def run_all_plot(xml):
     }
 
     biggestOverall = 0
-    for g in ("F", "D", "C", "B", "A", "AA", "AAA", "AAAA"):
+    for g in ("F", "D", "C", "B", "A", "AA", "AAA", "AAAA", "AAAAA"):
         k = g
         v = scores[g]
         dates = []
@@ -281,6 +282,7 @@ def run_pb_plot(xml):
 
     scores = getPBs(charts, skillset, advanced_filter, ssrnorm, requiredAcc=threshold, no_limits=no_limits)
     colors = {
+        "AAAAA" : 'm',
         "AAAA" : 'c',
         "AAA" : 'y',
         "AA" : 'b',
@@ -289,13 +291,13 @@ def run_pb_plot(xml):
 
     dates = {}
     values = {}
-    for g in ("AAAA", "AAA", "AA", "others"):
+    for g in ("AAAAA", "AAAA", "AAA", "AA", "others"):
         dates[g] = scores[1][g][0]
         values[g] = scores[1][g][1]
 
     fg, ax = plt.subplots()
 
-    for v in ("others", "AA", "AAA", "AAAA"):
+    for v in ("others", "AA", "AAA", "AAAA", "AAAAA"):
         ax.plot_date(dates[v], values[v], color=colors[v], markersize=1)
         print(v, len(values[v]))
 

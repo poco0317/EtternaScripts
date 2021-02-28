@@ -200,22 +200,6 @@ class InfoHolder:
     def __str__(self):
         return str(self.date) + f" {self.percent * 100:.4f}% worth " + str(self.overall)
 
-def map_grade_tier_to_int(grade):
-    '''
-    Given a grade string, return an int for comparison. 0 would be AAAA. 7 is Failed.
-    '''
-    gradez = [
-        "Tier01",
-        "Tier02",
-        "Tier03",
-        "Tier04",
-        "Tier05",
-        "Tier06",
-        "Tier07",
-        "Failed"
-    ]
-    return gradez.index(grade)
-
 def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requiredAcc = 0, no_limits = False):
     '''
     Get the full list of scores according to the given Skillset and set of charts
@@ -262,11 +246,13 @@ def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requi
 
     SkillsetsWithDates.sort(key = lambda x: x.date)
 
-    gradeNames = ("AAAA", "AAA", "AA", "A", "B", "C", "D", "F")
+    gradeNames = ("AAAAA", "AAAA", "AAA", "AA", "A", "B", "C", "D", "F")
     def percentToName(num):
-        if num >= .9997:
+        if num >= .99996:
+            return "AAAAA"
+        elif num >= .99955:
             return "AAAA"
-        elif num >= .9975:
+        elif num >= .997:
             return "AAA"
         elif num >= .93:
             return "AA"
@@ -294,6 +280,7 @@ def get_scores(charts, skillset, advanced_filter = False, ssrnorm = False, requi
 
     print("Earliest Score:", SkillsetsWithDates[0])
     print("Latest Score:", SkillsetsWithDates[-1])
+    #print(len(SkillsetsWithDates))
     return grades
 
 def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredAcc = 0, no_limits = False):
@@ -305,6 +292,7 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
     pbmap = {}
 
     failed = 0
+    AAAAAkeys = set()
     AAAAkeys = set()
     AAAkeys = set()
     AAkeys = set()
@@ -331,9 +319,11 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
                             for attribute in score.findall("WifeScore"):
                                 if pbkey in pbmap:
                                     thenum = float(" ".join(attribute.itertext()))
-                                    if thenum >= 0.9997:
+                                    if thenum >= 0.99996:
+                                        AAAAAkeys.add(pbkey)
+                                    elif thenum >= 0.99955:
                                         AAAAkeys.add(pbkey)
-                                    elif thenum >= 0.9975:
+                                    elif thenum >= 0.997:
                                         AAAkeys.add(pbkey)
                                     elif thenum >= 0.93:
                                         AAkeys.add(pbkey)
@@ -341,9 +331,11 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
                             for attribute in score.findall("SSRNormPercent"):
                                 if pbkey in pbmap:
                                     thenum = float(" ".join(attribute.itertext()))
-                                    if thenum >= 0.9997:
+                                    if thenum >= 0.99996:
+                                        AAAAAkeys.add(pbkey)
+                                    elif thenum >= 0.99955:
                                         AAAAkeys.add(pbkey)
-                                    elif thenum >= 0.9975:
+                                    elif thenum >= 0.997:
                                         AAAkeys.add(pbkey)
                                     elif thenum >= 0.93:
                                         AAkeys.add(pbkey)
@@ -352,6 +344,9 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
                     #traceback.print_exc()
     overallWithDates = [data for (pb,data) in pbmap.items()]
     yeetus = sorted(overallWithDates, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S"))
+    #print("all charts", len(charts))
+    #print("missing", failed)
+    #print("found", len(yeetus))
 
     def skippable(score):
         biggestSSVal = 0
@@ -374,8 +369,10 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
 
     dates = matplotlib.dates.date2num([datetime.datetime.strptime(x["DateTime"], "%Y-%m-%d %H:%M:%S") for x in yeetus])
     values = [float(x[skillset]) for x in yeetus]
+    #print(len(values))
 
     # these are all lists of overallWithDates dictionaries
+    AAAAAs = []
     AAAAs = []
     AAAs = []
     AAs = []
@@ -385,8 +382,10 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
         if advanced_filter:
             if skippable(data):
                 continue
-                    
-        if pbk in AAAAkeys:
+
+        if pbk in AAAAAkeys:
+            AAAAAs.append(data)
+        elif pbk in AAAAkeys:
             AAAAs.append(data)
         elif pbk in AAAkeys:
             AAAs.append(data)
@@ -396,6 +395,7 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
             others.append(data)
 
     sortedGradesByDate = {
+        "AAAAA" : sorted(AAAAAs, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S")),
         "AAAA" : sorted(AAAAs, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S")),
         "AAA" : sorted(AAAs, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S")),
         "AA" : sorted(AAs, key = lambda kv: datetime.datetime.strptime(kv["DateTime"], "%Y-%m-%d %H:%M:%S")),
@@ -403,7 +403,7 @@ def getPBs(charts, skillset, advanced_filter = False, ssrnorm = False, requiredA
     }
 
     output = {}
-    for g in ("AAAA", "AAA", "AA", "others"):
+    for g in ("AAAAA", "AAAA", "AAA", "AA", "others"):
         output[g] = (matplotlib.dates.date2num([datetime.datetime.strptime(x["DateTime"], "%Y-%m-%d %H:%M:%S") for x in sortedGradesByDate[g]]), [float(x[skillset]) for x in sortedGradesByDate[g]])
 
     return (dates, values),output
