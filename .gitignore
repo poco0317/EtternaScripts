@@ -106,3 +106,16 @@ venv.bak/
 *.png
 
 *.xml
+zzzeo_dump.zip
+
+zzzeo_dump/
+
+XMLMerger/m/
+
+XMLMerger/s/
+
+*.zip
+
+*.json
+
+*.csv
