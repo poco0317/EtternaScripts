@@ -16,6 +16,10 @@ Execution: REQUIRES FFMEG. FFMPEG either needs to be in PATH or in the same dire
 
 Note: This is only written with dwi and sm compatibility in mind. Files with invalid utf 8 may break dramatically.
 
+## OldLeaderboardifier
+This takes a modern Etterna.xml and outputs a csv version of its scores for spreadsheet viewing purposes.
+
+Execution: Run the script and supply an input filename, player name, and output filename
 
 ## PackMassExtractor
 I wrote this because at one point I mirrored all of StepmaniaOnline to a single location and decided that extracting it to run in the game was a good idea. Well, 7zip did a good enough job of extracting all the pack zips to a single directory. Then I was left with many folders with improper structure so they couldn't immediately be loaded into the game. One level of directories needed to be removed in order for them to load from a single folder.
